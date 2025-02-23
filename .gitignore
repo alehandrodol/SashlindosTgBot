@@ -1,0 +1,31 @@
+# Python кэш
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Переменные окружения
+.env
+.env.*
+
+# Виртуальное окружение
+venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Логи
+*.log
+
+# Локальные файлы базы данных
+*.db
+*.sqlite
+*.sqlite3
+
+# Системные файлы
+.DS_Store
+Thumbs.db
