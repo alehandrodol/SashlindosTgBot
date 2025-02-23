@@ -3,6 +3,8 @@ name: Deploy to Yandex Cloud
 on:
   push:
     branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   deploy:
@@ -38,11 +40,23 @@ jobs:
         SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
       run: |
         ssh $SERVER_USERNAME@$SERVER_HOST << 'EOF'
-          cd /home/alehandro/Projects/sashl_tg_bot/SashlindosTgBot
+          cd /opt/Projects/sashl_tg_bot/SashlindosTgBot
           git pull origin master
-          source /home/alehandro/Projects/sashl_tg_bot/venv/bin/activate
+          source /opt/Projects/sashl_tg_bot/venv/bin/activate
           pip install -r requirements.txt
           cd database
           alembic upgrade head
           sudo systemctl restart tgbot
         EOF
+
+    - name: Send Telegram notification
+      if: always()
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        message: |
+          Деплой ${{ github.repository }}:
+          Статус: ${{ job.status }}
+          Коммит: ${{ github.event.head_commit.message }}
+          Автор: ${{ github.actor }}
