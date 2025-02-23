@@ -39,6 +39,7 @@ jobs:
       run: |
         ssh $SERVER_USERNAME@$SERVER_HOST << 'EOF'
           cd /opt/Projects/sashl_tg_bot/SashlindosTgBot
+          git config --global --add safe.directory /opt/Projects/sashl_tg_bot/SashlindosTgBot
           git pull origin master
           source /opt/Projects/sashl_tg_bot/venv/bin/activate
           pip install -r requirements.txt
