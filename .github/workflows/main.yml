@@ -1,0 +1,48 @@
+name: Deploy to Yandex Cloud
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    # - name: Set up Python
+    #   uses: actions/setup-python@v4
+    #   with:
+    #     python-version: '3.10'
+
+    # - name: Install dependencies
+    #   run: |
+    #     python -m pip install --upgrade pip
+    #     pip install -r requirements.txt
+    #     pip install pytest # если есть тесты
+
+    # - name: Run tests  # если есть тесты
+    #   run: |
+    #     pytest
+
+    - name: Install SSH key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+
+    - name: Deploy to server
+      env:
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+      run: |
+        ssh $SERVER_USERNAME@$SERVER_HOST << 'EOF'
+          cd /home/alehandro/Projects/sashl_tg_bot/SashlindosTgBot
+          git pull origin master
+          source /home/alehandro/Projects/sashl_tg_bot/venv/bin/activate
+          pip install -r requirements.txt
+          cd database
+          alembic upgrade head
+          sudo systemctl restart tgbot
+        EOF
