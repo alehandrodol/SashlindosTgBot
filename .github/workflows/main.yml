@@ -3,8 +3,6 @@ name: Deploy to Yandex Cloud
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
   deploy:
