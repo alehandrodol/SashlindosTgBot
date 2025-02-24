@@ -1,6 +1,6 @@
 import enum
-from datetime import date
 
+# Сторонние библиотеки
 from sqlalchemy import BigInteger, String, Column, Integer, ForeignKey, UniqueConstraint, Boolean, DateTime, Enum, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship

@@ -38,11 +38,14 @@ jobs:
         SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
       run: |
         ssh $SERVER_USERNAME@$SERVER_HOST << 'EOF'
-          cd /opt/Projects/sashl_tg_bot/SashlindosTgBot
+          cd /opt/Projects/sashl_tg_bot
+          sudo systemctl stop tgbot
           git pull origin master
-          source /opt/Projects/sashl_tg_bot/venv/bin/activate
+          rm -rf venv
+          python -m venv venv
+          source venv/bin/activate
           pip install -r requirements.txt
-          cd database
+          cd ./SashlindosTgBot/database
           alembic upgrade head
           sudo systemctl restart tgbot
         EOF

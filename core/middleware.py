@@ -1,10 +1,14 @@
-import logging
-from typing import Any, Awaitable, Callable, List
+# Стандартные библиотеки
+from typing import Any, Awaitable, Callable
+
+# Сторонние библиотеки
 from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject, Update
-from vk_api.vk_api import VkApi
+from aiogram.types import TelegramObject
+from vk_api import VkApi
+
+# Локальные импорты
+from .vk_handler import VKHandler
 from core.scheduler import Scheduler
-from core.vk_handler import VKHandler
 
 
 class SchedulerMiddleware(BaseMiddleware):

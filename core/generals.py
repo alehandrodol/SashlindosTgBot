@@ -1,7 +1,12 @@
-import logging
+# Стандартные библиотеки
 import asyncio
+import logging
+
+# Сторонние библиотеки
 from aiogram import Bot
 from sqlalchemy import select
+
+# Локальные импорты
 from database.database import Database
 from database.models import Chat
 

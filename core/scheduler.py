@@ -1,14 +1,16 @@
-import pytz
-import random
+# Стандартные библиотеки
 import logging
-
-from aiogram import Bot
+import random
 from datetime import datetime
-from sqlalchemy import select, and_
 
+# Сторонние библиотеки
+import pytz
+from aiogram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from sqlalchemy import select, and_
 
+# Локальные импорты
 from .daily import DailyHandler
 from .cleanup import CleanupHandler
 from database.database import Database

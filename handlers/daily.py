@@ -1,13 +1,18 @@
+# Стандартные библиотеки
 import logging
-from datetime import datetime
 import pytz
+from datetime import datetime
+
+# Сторонние библиотеки
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from sqlalchemy import select, and_, update, func, or_, case
-from database.models import SchedulerTask, TaskType, User, UserStats
 from aiogram.utils.markdown import hbold
 from core.vk_handler import VKHandler
+
+# Локальные импорты
+from database.models import SchedulerTask, TaskType, User, UserStats
 
 router = Router()
 

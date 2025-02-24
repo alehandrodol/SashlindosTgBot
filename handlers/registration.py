@@ -1,12 +1,15 @@
+# Стандартные библиотеки
 import logging
 
-from aiogram import Router, F
-from aiogram.types import Message, ChatMemberUpdated
+# Сторонние библиотеки
+from aiogram import Router
 from aiogram.filters import Command, ChatMemberUpdatedFilter, IS_NOT_MEMBER, IS_MEMBER
-
-from database.models import Chat, User, UserStats
+from aiogram.types import Message, ChatMemberUpdated
 from sqlalchemy import select
+
+# Локальные импорты
 from core.scheduler import Scheduler
+from database.models import Chat, User, UserStats
 
 
 router = Router()

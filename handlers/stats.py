@@ -1,9 +1,13 @@
-from aiogram import Router, F
-from aiogram.types import Message
-from aiogram.filters import Command
-from sqlalchemy import select
+# Стандартные библиотеки
 import logging
 
+# Сторонние библиотеки
+from aiogram import Router
+from aiogram.filters import Command
+from aiogram.types import Message
+from sqlalchemy import select
+
+# Локальные импорты
 from database.models import User, UserStats
 
 router = Router()

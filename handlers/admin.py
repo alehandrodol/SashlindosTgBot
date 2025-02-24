@@ -1,11 +1,16 @@
+# Стандартные библиотеки
+import logging
+
+# Сторонние библиотеки
 from aiogram import Router, F
-from aiogram.types import Message
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from database.models import Chat
+from aiogram.types import Message
 from sqlalchemy import select
-import logging
+
+# Локальные импорты
+from database.models import Chat
+from aiogram.fsm.state import State, StatesGroup
 
 router = Router()
 

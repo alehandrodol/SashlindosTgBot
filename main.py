@@ -1,12 +1,17 @@
+# Стандартные библиотеки
 import asyncio
 import logging
+
+# Сторонние библиотеки
 from aiogram import Bot, Dispatcher
+
+# Локальные импорты
 from config import load_config
-from handlers import registration, daily, stats, admin, entertainment, help
-from database import DatabaseMiddleware, Database, DatabaseConfig
-from core.scheduler import Scheduler
-from core.middleware import SchedulerMiddleware, VKMiddleware
 from core.generals import send_status_message
+from core.middleware import SchedulerMiddleware, VKMiddleware
+from core.scheduler import Scheduler
+from database import DatabaseMiddleware, Database, DatabaseConfig
+from handlers import registration, daily, stats, admin, entertainment, help
 
 # Включаем логирование
 logging.basicConfig(level=logging.INFO)
