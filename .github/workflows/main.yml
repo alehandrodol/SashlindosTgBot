@@ -46,8 +46,9 @@ jobs:
           rm -rf venv
           python3 -m venv venv
           source venv/bin/activate
+          cd SashlindosTgBot
           pip install -r requirements.txt
-          cd ./SashlindosTgBot/database
+          cd database
           alembic upgrade head
           sudo systemctl restart tgbot
         EOF
