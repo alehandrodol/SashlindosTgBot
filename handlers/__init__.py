@@ -1,3 +1,3 @@
-from . import registration, daily, stats, admin
+from . import registration, daily, stats, admin, entertainment
 
-__all__ = ["registration", "daily", "stats", "admin"] 
+__all__ = ["registration", "daily", "stats", "admin", "entertainment"] 

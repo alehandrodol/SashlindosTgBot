@@ -216,7 +216,7 @@ async def member_leave_chat(event: ChatMemberUpdated, session):
         logging.error(f"Ошибка при обработке удаления участника: {e}")
 
 @router.chat_member(ChatMemberUpdatedFilter(IS_MEMBER))
-async def member_join_chat(event: ChatMemberUpdated, session):
+async def member_join_chat(event: ChatMemberUpdated):
     """Обработчик события когда участник присоединяется к чату."""
     try:
 
