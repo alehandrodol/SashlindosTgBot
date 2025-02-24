@@ -38,9 +38,10 @@ jobs:
         SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
       run: |
         ssh $SERVER_USERNAME@$SERVER_HOST << 'EOF'
-          cd /opt/Projects/sashl_tg_bot
           sudo systemctl stop tgbot
+          cd /opt/Projects/sashl_tg_bot/SashlindosTgBot
           git pull origin master
+          cd ..
           rm -rf venv
           python -m venv venv
           source venv/bin/activate
