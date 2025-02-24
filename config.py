@@ -14,9 +14,14 @@ class DatabaseConfig:
     database: str
 
 @dataclass
+class VKConfig:
+    token: str
+
+@dataclass
 class Config:
     tg_bot: TgBot
     db: DatabaseConfig
+    vk: VKConfig
 
 def load_config(path: str | None = None) -> Config:
     env = Env()
@@ -32,5 +37,8 @@ def load_config(path: str | None = None) -> Config:
             password=env('DB_PASS'),
             user=env('DB_USER'),
             database=env('DB_NAME')
+        ),
+        vk=VKConfig(
+            token=env('VK_TOKEN')
         )
     )

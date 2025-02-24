@@ -7,13 +7,14 @@ from aiogram.filters import Command
 from sqlalchemy import select, and_, update, func, or_, case
 from database.models import SchedulerTask, TaskType, User, UserStats
 from aiogram.utils.markdown import hbold
+from core.vk_handler import VKHandler
 
 router = Router()
 
 @router.message(Command("daily_status"))
 async def cmd_daily_status(message: Message, session):
     if message.chat.type == 'private':
-        await message.answer("Эта команда работает только в групповых чатах!")
+        await message.reply("Эта команда работает только в групповых чатах!")
         return
 
     try:
@@ -39,7 +40,7 @@ async def cmd_daily_status(message: Message, session):
         if completed_task:
             completed_time = completed_task.scheduled_time.astimezone(moscow_tz)
             await message.answer(
-                f"Ежедневное сообщение уже было отправлено сегодня в {completed_time.strftime('%H:%M')} 🎉"
+                f"Локатор пидоров уже был запущен сегодня в {completed_time.strftime('%H:%M')} 🎉"
             )
         else:
             # Проверяем, запланировано ли сообщение на сегодня
@@ -57,9 +58,8 @@ async def cmd_daily_status(message: Message, session):
             pending_task = result.scalar_one_or_none()
             
             if pending_task:
-                scheduled_time = pending_task.scheduled_time.astimezone(moscow_tz)
                 await message.answer(
-                    f"Ежедневное сообщение запланировано на {scheduled_time.strftime('%H:%M')} ⏰"
+                    f"Локатор пидоров запланирован на сегодня, ждите ⏰"
                 )
             else:
                 await message.answer(
@@ -67,7 +67,7 @@ async def cmd_daily_status(message: Message, session):
                 )
 
     except Exception as e:
-        await message.answer("Произошла ошибка при проверке статуса ежедневного сообщения.")
+        await message.reply("Произошла ошибка при проверке статуса ежедневного сообщения.")
         logging.error(f"Error in cmd_daily_status: {e}")
 
 class DailyHandler:
@@ -103,7 +103,7 @@ class DailyHandler:
         return result.scalars().all()
 
     async def _update_master_slave_stats(self, session, master_id: int, slave_id: int):
-        """Обновляет статистику мастера и раба."""
+        """Обновляет статистику после daily."""
         await session.execute(
             update(UserStats)
             .where(
@@ -120,6 +120,11 @@ class DailyHandler:
                 slave_count=case(
                     (UserStats.id == slave_id, UserStats.slave_count + 1),
                     else_=UserStats.slave_count
+                ),
+                rating=case(
+                    (UserStats.id == master_id, UserStats.rating + 100),
+                    (UserStats.id == slave_id, UserStats.rating + 50),
+                    else_=UserStats.rating
                 )
             )
         )
@@ -131,24 +136,25 @@ class DailyHandler:
         
         return (
             f"🎯 Локатор обнаружил:\n\n"
-            f"👑 {hbold('Мастер')}: {master_username}\n"
-            f"🔗 {hbold('Раб')}: {slave_username}\n"
+            f"👑 {hbold('Пидор дня')}: {master_username}!\n"
+            f"🔗 {hbold('Пассив дня')}: {slave_username}!\n"
         )
 
 @router.callback_query(F.data == "daily_first")
-async def handle_daily_first(callback: CallbackQuery, session):
+async def handle_daily_first(callback: CallbackQuery, session, vk_handler: VKHandler):
     handler = DailyHandler()
     try:
         chat_id = callback.message.chat.id
         user_id = callback.from_user.id
         
-        # Удаляем сообщение с кнопкой
-        await callback.message.delete()
-        
         # Проверяем пользователя и обновляем рейтинг
         user = await handler._get_user_by_id(session, user_id, chat_id)
         if not user:
+            await callback.message.reply("Вы не учавствуете в поиске пидоров! Используйте /addme чтобы добавиться в поиск.")
             return
+        
+        # Удаляем сообщение с кнопкой
+        await callback.message.delete()
         
         await handler._update_user_rating(session, user.id, 25)
         
@@ -164,13 +170,31 @@ async def handle_daily_first(callback: CallbackQuery, session):
         await handler._update_master_slave_stats(session, master.id, slave.id)
         await session.commit()
         
-        # Отправляем результат
+        # Получаем случайное фото
+        photo_url = (await vk_handler.get_random_photo(
+            session,
+            user_id,
+            chat_id
+        ))[0]
+        
+        # Формируем результат
         result_message = handler._format_result_message(master, slave)
-        await callback.bot.send_message(
-            chat_id=chat_id,
-            text=result_message,
-            parse_mode="HTML"
-        )
+        
+        # Отправляем результат с фото, если оно есть
+        if photo_url:
+            await callback.bot.send_photo(
+                chat_id=chat_id,
+                photo=photo_url,
+                caption=result_message,
+                parse_mode="HTML"
+            )
+        else:
+            # Если фото не удалось получить, отправляем только текст
+            await callback.bot.send_message(
+                chat_id=chat_id,
+                text=result_message,
+                parse_mode="HTML"
+            )
         
         logging.info(
             f"Выбраны master ({master.username}) и slave ({slave.username}) "

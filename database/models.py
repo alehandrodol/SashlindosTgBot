@@ -1,6 +1,7 @@
 import enum
+from datetime import date
 
-from sqlalchemy import BigInteger, String, Column, Integer, ForeignKey, UniqueConstraint, Boolean, DateTime, Enum
+from sqlalchemy import BigInteger, String, Column, Integer, ForeignKey, UniqueConstraint, Boolean, DateTime, Enum, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -53,5 +54,6 @@ class UserStats(Base):
     rating = Column(Integer, default=0, nullable=False)
     master_count = Column(Integer, default=0, nullable=False)
     slave_count = Column(Integer, default=0, nullable=False)
+    last_picture_date = Column(Date, nullable=True)
     
     user = relationship("User", back_populates="stats") 

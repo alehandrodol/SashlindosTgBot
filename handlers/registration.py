@@ -2,14 +2,31 @@ import logging
 
 from aiogram import Router, F
 from aiogram.types import Message, ChatMemberUpdated
-from aiogram.filters import Command, ChatMemberUpdatedFilter, ADMINISTRATOR, MEMBER
-from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, IS_NOT_MEMBER, IS_MEMBER
+from aiogram.filters import Command, ChatMemberUpdatedFilter, IS_NOT_MEMBER, IS_MEMBER
+
 from database.models import Chat, User, UserStats
 from sqlalchemy import select
 from core.scheduler import Scheduler
 
 
 router = Router()
+
+HELLO_MESSAGE = """
+Здорова! 👋
+
+Я тут для того чтобы найти главных геюг в этом чате! 🌈✨
+Сначала нужно зарегистрировать этот чат с помощью команды /start 📝
+
+Если хочешь участвовать в поиске пидорасов, используй команду /addme 🎯
+И тебе будут доступны все мои возможности!
+"""
+
+READY_MESSAGE = """
+Все готово!
+Теперь я готов искать главных геюг в этом чате!😈"
+Ожидайте завтра, и будьте всегда на чеку!👀 (не надо ночью ждать)
+Незабудьте добавиться в поиск пидорасов с помощью команды /addme
+"""
 
 @router.message(Command("start"))
 async def cmd_start(message: Message, session, scheduler: Scheduler):
@@ -33,7 +50,7 @@ async def cmd_start(message: Message, session, scheduler: Scheduler):
         
         # Настраиваем расписание для нового чата
         await scheduler.setup_chat_job(chat.chat_id)
-        await message.reply("Бот успешно активирован в группе!")
+        await message.reply(READY_MESSAGE)
 
     except Exception as e:
         await message.reply("Произошла ошибка при активации бота.")
@@ -66,23 +83,19 @@ class RegistrationHandler:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def _create_user(session, user_id: int, chat_id: int, username: str | None) -> User:
+    async def _create_user(session, user_id: int, chat_id: int, username: str | None, is_active: bool = True) -> User:
         """Создает нового пользователя и его статистику."""
         new_user = User(
             user_id=user_id,
             chat_id=chat_id,
-            username=username
+            username=username,
+            is_active=is_active
         )
         session.add(new_user)
         await session.flush()
 
         # Создаем запись в таблице статистики
-        new_stats = UserStats(
-            id=new_user.id,
-            rating=0,
-            master_count=0,
-            slave_count=0
-        )
+        new_stats = UserStats(id=new_user.id)
         session.add(new_stats)
         await session.commit()
 
@@ -117,6 +130,21 @@ class RegistrationHandler:
         await scheduler.setup_chat_job(chat.chat_id)
         return True
 
+    @staticmethod
+    async def _deactivate_chat(session, chat: Chat) -> bool:
+        """Деактивирует чат.
+        
+        Returns:
+            bool: True если чат был активен и деактивирован,
+                 False если чат уже был неактивен
+        """
+        if not chat.is_active:
+            return False
+            
+        chat.is_active = False
+        await session.commit()
+        return True
+
 @router.message(Command("addme"))
 async def cmd_addme(message: Message, session):
     """Обработчик команды регистрации пользователя в чате."""
@@ -140,9 +168,9 @@ async def cmd_addme(message: Message, session):
             if not user.is_active:
                 user.is_active = True
                 await session.commit()
-                await message.reply("Вы снова активны в этом чате!")
+                await message.reply("Вы снова доступны для поиска пидоров!")
                 return
-            await message.reply("Вы уже зарегистрированы в этом чате!")
+            await message.reply("Вы уже учавствуете в поиске пидоров!")
             return
 
         # Создаем нового пользователя
@@ -150,17 +178,18 @@ async def cmd_addme(message: Message, session):
             session,
             message.from_user.id,
             message.chat.id,
-            message.from_user.username
+            message.from_user.username,
+            is_active=True
         )
 
-        await message.reply("Ты успешно зарегистрирован!")
+        await message.reply("Ты успешно зарегестрирован в кандидаты на пидора!")
 
     except Exception as e:
         await message.reply("Произошла ошибка при регистрации.")
         logging.error(f"Error in cmd_addme: {e}")
 
-@router.message(Command("leave"))
-async def cmd_leave(message: Message, session):
+@router.message(Command("disableme"))
+async def cmd_disableme(message: Message, session):
     """Обработчик команды деактивации пользователя в чате."""
     if message.chat.type == 'private':
         await message.reply("Эта команда работает только в групповых чатах!")
@@ -169,19 +198,99 @@ async def cmd_leave(message: Message, session):
     try:
         handler = RegistrationHandler()
         
-        # Переиспользуем метод получения пользователя
+        # Получаем пользователя
         user = await handler._get_user(session, message.from_user.id, message.chat.id)
 
         if not user:
-            await message.reply("Вы не зарегистрированы в этом чате!")
+            await message.reply("Вы не учавствуете в поиске пидоров!")
             return
         
         # Деактивируем пользователя
         if await handler._deactivate_user(session, user):
-            await message.reply("Вы успешно деактивированы в этом чате! Используйте /addme чтобы снова стать активным.")
+            await message.reply("Вы успешно убраны из поиска пидоров! Используйте /addme чтобы снова добавиться в поиск.")
         else:
-            await message.reply("Вы уже неактивны в этом чате!")
+            await message.reply("Вы уже не учавствуете в поиске пидоров!")
 
     except Exception as e:
         await message.reply("Произошла ошибка при деактивации.")
-        logging.error(f"Error in cmd_leave: {e}")
+        logging.error(f"Error in cmd_disableme: {e}")
+
+@router.chat_member(ChatMemberUpdatedFilter(IS_NOT_MEMBER))
+async def member_leave_chat(event: ChatMemberUpdated, session):
+    """Обработчик события когда участника удаляют или он выходит из чата."""
+    try:
+        handler = RegistrationHandler()
+        
+        # Получаем пользователя
+        user = await handler._get_user(session, event.old_chat_member.user.id, event.chat.id)
+        
+        if user:
+            # Деактивируем пользователя
+            await handler._deactivate_user(session, user)
+            await event.bot.send_message(
+                chat_id=event.chat.id,
+                text=f"Пользователь {user.username or user.user_id} сбежал из видимости моего радара!"
+            )
+            logging.info(f"Пользователь {user.username or user.user_id} деактивирован в чате {event.chat.id}")
+            
+    except Exception as e:
+        logging.error(f"Ошибка при обработке удаления участника: {e}")
+
+@router.chat_member(ChatMemberUpdatedFilter(IS_MEMBER))
+async def member_join_chat(event: ChatMemberUpdated):
+    """Обработчик события когда участник присоединяется к чату."""
+    try:
+
+        username = event.new_chat_member.user.username or event.new_chat_member.user.first_name
+        await event.bot.send_message(
+            chat_id=event.chat.id,
+            text=f"Привет, {username}! 👋\n\n"
+                    f"Если хочешь участвовать в поиске пидорасов, используй команду /addme"
+        )
+            
+    except Exception as e:
+        logging.error(f"Ошибка при обработке присоединения участника: {e}")
+
+@router.my_chat_member(ChatMemberUpdatedFilter(IS_NOT_MEMBER))
+async def bot_removed_from_chat(event: ChatMemberUpdated, session):
+    """Обработчик события когда бота удаляют из чата."""
+    try:
+        handler = RegistrationHandler()
+        
+        # Получаем чат
+        chat = await handler._get_chat(session, event.chat.id)
+        
+        if chat:
+            # Деактивируем чат
+            await handler._deactivate_chat(session, chat)
+            logging.info(f"Бот был удален из чата {event.chat.id}, чат деактивирован")
+            
+    except Exception as e:
+        logging.error(f"Ошибка при обработке удаления бота из чата: {e}")
+
+@router.my_chat_member(ChatMemberUpdatedFilter(IS_MEMBER))
+async def bot_added_to_chat(event: ChatMemberUpdated, session):
+    """Обработчик события когда бота добавляют в чат."""
+    try:
+        handler = RegistrationHandler()
+        
+        # Проверяем существование чата
+        chat = await handler._get_chat(session, event.chat.id)
+        
+        if chat:
+            # Если чат уже существует, активируем его
+            chat.is_active = True
+            await session.commit()
+            await event.bot.send_message(
+                chat_id=event.chat.id,
+                text="Я вернулся из небытия, да-да - я! 😈"
+            )
+            logging.info(f"Бот реактивирован в существующем чате {event.chat.id}")
+        else:
+            await event.bot.send_message(
+                chat_id=event.chat.id,
+                text=HELLO_MESSAGE
+            )
+        
+    except Exception as e:
+        logging.error(f"Ошибка при обработке добавления бота в чат: {e}")

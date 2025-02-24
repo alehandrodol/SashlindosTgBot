@@ -81,7 +81,7 @@ class StatsHandler:
 async def cmd_ratings(message: Message, session):
     """Показывает рейтинг всех участников чата."""
     if message.chat.type == 'private':
-        await message.answer("Эта команда работает только в групповых чатах!")
+        await message.reply("Эта команда работает только в групповых чатах!")
         return
 
     try:
@@ -99,7 +99,7 @@ async def cmd_ratings(message: Message, session):
             return
         
         # Формируем список
-        lines = ["📊 <b>Рейтинг участников:</b>\n"]
+        lines = ["📊 <b>Рейтинг пидорасов:</b>\n"]
         
         # Добавляем активных пользователей
         active_users = [
@@ -116,11 +116,11 @@ async def cmd_ratings(message: Message, session):
             if not user.is_active
         ]
         if inactive_users:
-            lines.append("\n💤 <b>Неактивные участники:</b>")
+            lines.append("\n💤 <b>Неактивные пидорасы:</b>")
             lines.extend(inactive_users)
         
         # Отправляем сообщение
-        await message.reply(
+        await message.answer(
             "\n".join(lines),
             parse_mode="HTML"
         )
@@ -133,7 +133,7 @@ async def cmd_ratings(message: Message, session):
 async def cmd_masters(message: Message, session):
     """Показывает статистику мастеров."""
     if message.chat.type == 'private':
-        await message.answer("Эта команда работает только в групповых чатах!")
+        await message.reply("Эта команда работает только в групповых чатах!")
         return
 
     try:
@@ -147,10 +147,10 @@ async def cmd_masters(message: Message, session):
         )
         
         if not users_with_stats:
-            await message.answer("В этом чате пока нет зарегистрированных пользователей!")
+            await message.reply("В этом чате пока нет зарегистрированных пользователей!")
             return
         
-        lines = ["👑 <b>Статистика мастеров:</b>\n"]
+        lines = ["👑 <b>Статистика пидоров дня:</b>\n"]
         
         # Активные пользователи
         active_users = [
@@ -167,20 +167,20 @@ async def cmd_masters(message: Message, session):
             if not user.is_active
         ]
         if inactive_users:
-            lines.append("\n💤 <b>Неактивные участники:</b>")
+            lines.append("\n💤 <b>Неактивные пидорасы:</b>")
             lines.extend(inactive_users)
         
         await message.answer("\n".join(lines), parse_mode="HTML")
 
     except Exception as e:
-        await message.answer("Произошла ошибка при получении статистики мастеров.")
+        await message.reply("Произошла ошибка при получении статистики мастеров.")
         logging.error(f"Error in cmd_masters: {e}")
 
 @router.message(Command("slaves"))
 async def cmd_slaves(message: Message, session):
     """Показывает статистику рабов."""
     if message.chat.type == 'private':
-        await message.answer("Эта команда работает только в групповых чатах!")
+        await message.reply("Эта команда работает только в групповых чатах!")
         return
 
     try:
@@ -194,10 +194,10 @@ async def cmd_slaves(message: Message, session):
         )
         
         if not users_with_stats:
-            await message.answer("В этом чате пока нет зарегистрированных пользователей!")
+            await message.reply("В этом чате пока нет зарегистрированных пользователей!")
             return
         
-        lines = ["🔗 <b>Статистика рабов:</b>\n"]
+        lines = ["🔗 <b>Статистика пассивов:</b>\n"]
         
         # Активные пользователи
         active_users = [
@@ -214,11 +214,11 @@ async def cmd_slaves(message: Message, session):
             if not user.is_active
         ]
         if inactive_users:
-            lines.append("\n💤 <b>Неактивные участники:</b>")
+            lines.append("\n💤 <b>Неактивные пидорасы:</b>")
             lines.extend(inactive_users)
         
         await message.answer("\n".join(lines), parse_mode="HTML")
 
     except Exception as e:
-        await message.answer("Произошла ошибка при получении статистики рабов.")
+        await message.reply("Произошла ошибка при получении статистики рабов.")
         logging.error(f"Error in cmd_slaves: {e}") 
