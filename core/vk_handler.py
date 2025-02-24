@@ -1,10 +1,15 @@
+# Стандартные библиотеки
 import logging
 import random
 from datetime import datetime
+
+# Сторонние библиотеки
 import pytz
-from vk_api.vk_api import VkApiMethod
-from database.models import User, UserStats
 from sqlalchemy import select, and_
+from vk_api.vk_api import VkApiMethod
+
+# Локальные импорты
+from database.models import User, UserStats
 
 MOSCOW_TZ = pytz.timezone('Europe/Moscow')
 

@@ -1,9 +1,14 @@
-from datetime import datetime, timedelta
+# Стандартные библиотеки
 import logging
+from datetime import datetime, timedelta
+
+# Сторонние библиотеки
 import pytz
+from sqlalchemy import and_, delete
+
+# Локальные импорты
 from database.database import Database
 from database.models import SchedulerTask
-from sqlalchemy import and_, delete
 
 class CleanupHandler:
     def __init__(self, db: Database):

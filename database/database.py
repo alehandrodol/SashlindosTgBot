@@ -1,8 +1,13 @@
-from aiogram import BaseMiddleware
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+# Стандартные библиотеки
 from typing import Any, AsyncGenerator, Awaitable, Callable, Dict
+
+# Сторонние библиотеки
+from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+
+# Локальные импорты
 from config import Config
 
 
