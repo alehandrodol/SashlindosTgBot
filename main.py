@@ -2,7 +2,7 @@ import asyncio
 import logging
 from aiogram import Bot, Dispatcher
 from config import load_config
-from handlers import registration, daily, stats
+from handlers import registration, daily, stats, admin
 from database import DatabaseMiddleware, Database, DatabaseConfig
 from core.scheduler import Scheduler
 from core.middleware import SchedulerMiddleware
@@ -41,7 +41,8 @@ async def main():
     dp.include_router(registration.router)
     dp.include_router(daily.router)
     dp.include_router(stats.router)
-
+    dp.include_router(admin.router)
+    
     # Пропускаем накопившиеся апдейты и запускаем polling
     await bot.delete_webhook(drop_pending_updates=True)
     try:
