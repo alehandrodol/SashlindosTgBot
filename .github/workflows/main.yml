@@ -49,15 +49,3 @@ jobs:
           alembic upgrade head
           sudo systemctl restart tgbot
         EOF
-
-    - name: Send Telegram notification
-      if: always()
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_CHAT_ID }}
-        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        message: |
-          Деплой ${{ github.repository }}:
-          Статус: ${{ job.status }}
-          Коммит: ${{ github.event.head_commit.message }}
-          Автор: ${{ github.actor }}
