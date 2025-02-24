@@ -40,10 +40,11 @@ jobs:
         ssh $SERVER_USERNAME@$SERVER_HOST << 'EOF'
           sudo systemctl stop tgbot
           cd /opt/Projects/sashl_tg_bot/SashlindosTgBot
-          git pull origin master
+          git fetch origin
+          git reset --hard origin/master
           cd ..
           rm -rf venv
-          python -m venv venv
+          python3 -m venv venv
           source venv/bin/activate
           pip install -r requirements.txt
           cd ./SashlindosTgBot/database
