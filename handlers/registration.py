@@ -11,6 +11,23 @@ from core.scheduler import Scheduler
 
 router = Router()
 
+HELLO_MESSAGE = """
+Здорова! 👋
+
+Я тут для того чтобы найти главных геюг в этом чате! 🌈✨
+Сначала нужно зарегистрировать этот чат с помощью команды /start 📝
+
+Если хочешь участвовать в поиске пидорасов, используй команду /addme 🎯
+И тебе будут доступны все мои возможности!
+"""
+
+READY_MESSAGE = """
+Все готово!
+Теперь я готов искать главных геюг в этом чате!😈"
+Ожидайте завтра, и будьте всегда на чеку!👀 (не надо ночью ждать)
+Незабудьте добавиться в поиск пидорасов с помощью команды /addme
+"""
+
 @router.message(Command("start"))
 async def cmd_start(message: Message, session, scheduler: Scheduler):
     """Обработчик команды активации бота в чате."""
@@ -33,7 +50,7 @@ async def cmd_start(message: Message, session, scheduler: Scheduler):
         
         # Настраиваем расписание для нового чата
         await scheduler.setup_chat_job(chat.chat_id)
-        await message.reply("Бот успешно активирован в группе!")
+        await message.reply(READY_MESSAGE)
 
     except Exception as e:
         await message.reply("Произошла ошибка при активации бота.")
@@ -151,9 +168,9 @@ async def cmd_addme(message: Message, session):
             if not user.is_active:
                 user.is_active = True
                 await session.commit()
-                await message.reply("Вы снова активны в этом чате!")
+                await message.reply("Вы снова доступны для поиска пидоров!")
                 return
-            await message.reply("Вы уже зарегистрированы в этом чате!")
+            await message.reply("Вы уже учавствуете в поиске пидоров!")
             return
 
         # Создаем нового пользователя
@@ -165,7 +182,7 @@ async def cmd_addme(message: Message, session):
             is_active=True
         )
 
-        await message.reply("Ты успешно зарегистрирован!")
+        await message.reply("Ты успешно зарегестрирован в кандидаты на пидора!")
 
     except Exception as e:
         await message.reply("Произошла ошибка при регистрации.")
@@ -185,14 +202,14 @@ async def cmd_disableme(message: Message, session):
         user = await handler._get_user(session, message.from_user.id, message.chat.id)
 
         if not user:
-            await message.reply("Вы не зарегистрированы в этом чате!")
+            await message.reply("Вы не учавствуете в поиске пидоров!")
             return
         
         # Деактивируем пользователя
         if await handler._deactivate_user(session, user):
-            await message.reply("Вы успешно деактивированы в этом чате! Используйте /addme чтобы снова стать активным.")
+            await message.reply("Вы успешно убраны из поиска пидоров! Используйте /addme чтобы снова добавиться в поиск.")
         else:
-            await message.reply("Вы уже неактивны в этом чате!")
+            await message.reply("Вы уже не учавствуете в поиске пидоров!")
 
     except Exception as e:
         await message.reply("Произошла ошибка при деактивации.")
@@ -210,6 +227,10 @@ async def member_leave_chat(event: ChatMemberUpdated, session):
         if user:
             # Деактивируем пользователя
             await handler._deactivate_user(session, user)
+            await event.bot.send_message(
+                chat_id=event.chat.id,
+                text=f"Пользователь {user.username or user.user_id} сбежал из видимости моего радара!"
+            )
             logging.info(f"Пользователь {user.username or user.user_id} деактивирован в чате {event.chat.id}")
             
     except Exception as e:
@@ -265,6 +286,11 @@ async def bot_added_to_chat(event: ChatMemberUpdated, session):
                 text="Я вернулся из небытия, да-да - я! 😈"
             )
             logging.info(f"Бот реактивирован в существующем чате {event.chat.id}")
+        else:
+            await event.bot.send_message(
+                chat_id=event.chat.id,
+                text=HELLO_MESSAGE
+            )
         
     except Exception as e:
         logging.error(f"Ошибка при обработке добавления бота в чат: {e}")

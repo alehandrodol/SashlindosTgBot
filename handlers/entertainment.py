@@ -6,14 +6,16 @@ from core.vk_handler import VKHandler
 
 router = Router()
 
-GROUP_ID = '-209871225'
-ALBUM_ID = '282103569'
-
 @router.message(Command("picture"))
-async def cmd_picture(message: Message, vk_handler: VKHandler):
+async def cmd_picture(message: Message, vk_handler: VKHandler, session):
     """Отправляет случайную фотографию из альбома группы."""
     try:
-        photo_url, error = vk_handler.get_random_photo(GROUP_ID, ALBUM_ID)
+        photo_url, error = await vk_handler.get_random_photo(
+            session,
+            message.from_user.id,
+            message.chat.id,
+            check_limit=True
+        )
         
         if error:
             await message.reply(error)
@@ -22,7 +24,7 @@ async def cmd_picture(message: Message, vk_handler: VKHandler):
         # Отправляем фото
         await message.reply_photo(
             photo=photo_url,
-            caption="Случайная фотография из альбома 📸"
+            caption="Вот вам пидорская картинка 📸"
         )
         
     except Exception as e:
