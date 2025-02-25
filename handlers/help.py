@@ -50,6 +50,8 @@ async def cmd_help(message: Message):
 
 @router.callback_query(F.data == "activation")
 async def show_activation(callback: CallbackQuery):
+    if callback.message.reply_to_message and callback.message.reply_to_message.from_user.id != callback.from_user.id:
+        return
     await callback.message.edit_text(
         "Вот пидорские команды:",
         reply_markup=get_activation_keyboard()
@@ -57,6 +59,8 @@ async def show_activation(callback: CallbackQuery):
 
 @router.callback_query(F.data == "stats")
 async def show_stats(callback: CallbackQuery):
+    if callback.message.reply_to_message and callback.message.reply_to_message.from_user.id != callback.from_user.id:
+        return
     await callback.message.edit_text(
         "Вот пидорские команды:",
         reply_markup=get_stats_keyboard()
@@ -64,6 +68,8 @@ async def show_stats(callback: CallbackQuery):
 
 @router.callback_query(F.data == "fun")
 async def show_fun(callback: CallbackQuery):
+    if callback.message.reply_to_message and callback.message.reply_to_message.from_user.id != callback.from_user.id:
+        return
     await callback.message.edit_text(
         "Вот пидорские команды:",
         reply_markup=get_fun_keyboard()
@@ -71,6 +77,8 @@ async def show_fun(callback: CallbackQuery):
 
 @router.callback_query(F.data == "back")
 async def go_back(callback: CallbackQuery):
+    if callback.message.reply_to_message and callback.message.reply_to_message.from_user.id != callback.from_user.id:
+        return
     await callback.message.edit_text(
         "Вот пидорское меню команд:",
         reply_markup=get_main_keyboard()
@@ -78,6 +86,9 @@ async def go_back(callback: CallbackQuery):
 
 @router.callback_query(F.data == "close")
 async def close_menu(callback: CallbackQuery):
+    if callback.message.reply_to_message and callback.message.reply_to_message.from_user.id != callback.from_user.id:
+        return
+    await callback.message.reply_to_message.delete()
     await callback.message.delete()
 
 @router.callback_query(F.data.startswith("cmd_"))
