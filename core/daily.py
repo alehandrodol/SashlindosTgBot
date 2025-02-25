@@ -35,7 +35,7 @@ class DailyHandler:
                     [
                         InlineKeyboardButton(
                             text="Я первый! 🚀",
-                            callback_data="daily_first"
+                            callback_data=f"daily_first_{task_id}"
                         )
                     ]
                 ]
@@ -61,7 +61,7 @@ class DailyHandler:
             
             # Планируем следующую задачу через переданный scheduler
             if scheduler:
-                await scheduler.schedule_next_message(chat_id)
+                await scheduler.schedule_daily_master(chat_id)
             
         except Exception as e:
             logging.error(f"Ошибка при отправке ежедневного сообщения в чат {chat_id}: {e}")
