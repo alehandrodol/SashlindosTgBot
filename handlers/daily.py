@@ -145,13 +145,36 @@ class DailyHandler:
             f"🔗 {hbold('Пассив дня')}: {slave_username}!\n"
         )
 
-@router.callback_query(F.data == "daily_first")
+@router.callback_query(F.data.startswith("daily_first_"))
 async def handle_daily_first(callback: CallbackQuery, session, vk_handler: VKHandler):
-    handler = DailyHandler()
     try:
         chat_id = callback.message.chat.id
         user_id = callback.from_user.id
+        task_id = int(callback.data.split('_')[-1])
         
+        # Проверяем, что задача была запланирована на сегодня
+        query = select(SchedulerTask).where(SchedulerTask.id == task_id)
+        result = await session.execute(query)
+        task = result.scalar_one_or_none()
+        
+        if not task:
+            await callback.message.reply("Произошла ошибка при поиске задачи.")
+            return
+            
+        # Сравниваем текущий день с днем задачи
+        moscow_tz = pytz.timezone('Europe/Moscow')
+        current_date = datetime.now(moscow_tz).date()
+        task_date = task.scheduled_time.astimezone(moscow_tz).date()
+        
+        if current_date != task_date:
+            # Удаляем клавиатуру у сообщения
+            await callback.message.edit_reply_markup(reply_markup=None)
+            await callback.message.reply(
+                "Вы не успели выполнить команду в нужный день! 😢"
+            )
+            return
+        
+        handler = DailyHandler()
         # Проверяем пользователя и обновляем рейтинг
         user = await handler._get_user_by_id(session, user_id, chat_id)
         if not user:
