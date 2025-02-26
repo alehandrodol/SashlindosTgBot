@@ -24,8 +24,8 @@ async def cmd_daily_status(message: Message, session):
 
     try:
         # Получаем текущую дату в МСК
-        moscow_tz = pytz.timezone('Europe/Moscow')
-        now = datetime.now(moscow_tz)
+        utc_tz = pytz.UTC
+        now = datetime.now(utc_tz)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         
         # Ищем выполненную задачу на сегодня
@@ -43,7 +43,7 @@ async def cmd_daily_status(message: Message, session):
         completed_task = result.scalar_one_or_none()
         
         if completed_task:
-            completed_time = completed_task.scheduled_time.astimezone(moscow_tz)
+            completed_time = completed_task.scheduled_time.astimezone(utc_tz)
             await message.answer(
                 f"Локатор пидоров уже был запущен сегодня в {completed_time.strftime('%H:%M')} 🎉"
             )
@@ -162,9 +162,9 @@ async def handle_daily_first(callback: CallbackQuery, session, vk_handler: VKHan
             return
             
         # Сравниваем текущий день с днем задачи
-        moscow_tz = pytz.timezone('Europe/Moscow')
-        current_date = datetime.now(moscow_tz).date()
-        task_date = task.scheduled_time.astimezone(moscow_tz).date()
+        utc_tz = pytz.UTC
+        current_date = datetime.now(utc_tz).date()
+        task_date = task.scheduled_time.astimezone(utc_tz).date()
         
         if current_date != task_date:
             # Удаляем клавиатуру у сообщения

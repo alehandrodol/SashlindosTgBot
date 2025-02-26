@@ -16,8 +16,8 @@ class CleanupHandler:
 
     async def cleanup_old_tasks(self):
         try:
-            moscow_tz = pytz.timezone('Europe/Moscow')
-            cutoff_date = datetime.now(moscow_tz) - timedelta(days=10)
+            utc_tz = pytz.UTC
+            cutoff_date = datetime.now(utc_tz) - timedelta(days=10)
             
             async for session in self._db.get_session():
                 # Удаляем старые выполненные задачи

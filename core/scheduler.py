@@ -16,7 +16,7 @@ from .cleanup import CleanupHandler
 from database.database import Database
 from database.models import Chat, SchedulerTask, TaskType
 
-MOSCOW_TZ = pytz.timezone('Europe/Moscow')
+UTC_TZ = pytz.UTC
 
 class Scheduler:
     _bot: Bot
@@ -28,7 +28,7 @@ class Scheduler:
     def __init__(self, bot: Bot, db: Database):
         self._bot = bot
         self._db = db
-        self._scheduler = AsyncIOScheduler(timezone=MOSCOW_TZ)
+        self._scheduler = AsyncIOScheduler(timezone=UTC_TZ)
         self._daily_handler = DailyHandler(bot, db)
         self._cleanup_handler = CleanupHandler(db)
     
@@ -36,11 +36,11 @@ class Scheduler:
         """Планирует следующее ежедневное сообщение для поиска пидоров в чате."""
         try:
             # Генерируем случайное время
-            hour = random.randint(9, 21)
+            hour = random.randint(6, 18)
             minute = random.randint(0, 59)
             
             # Вычисляем следующее время
-            now = datetime.now(MOSCOW_TZ)
+            now = datetime.now(UTC_TZ)
             next_time = now.replace(
                 day=now.day + 1,
                 hour=hour,
@@ -71,7 +71,7 @@ class Scheduler:
     async def check_missed_dailies(self, session):
         """Проверяет и обрабатывает пропущенные ежедневные сообщения."""
         try:
-            now = datetime.now(MOSCOW_TZ)
+            now = datetime.now(UTC_TZ)
             
             # Получаем все невыполненные задачи, время которых уже прошло
             query = select(SchedulerTask).where(
@@ -107,7 +107,7 @@ class Scheduler:
 
     async def _restore_pending_tasks(self, session) -> int:
         """Восстанавливает существующие невыполненные задачи."""
-        now = datetime.now(MOSCOW_TZ)
+        now = datetime.now(UTC_TZ)
         task_query = select(SchedulerTask).where(
             and_(
                 SchedulerTask.is_completed == False,
@@ -125,7 +125,7 @@ class Scheduler:
 
     async def _schedule_task(self, task: SchedulerTask):
         """Планирует отдельную задачу в планировщике."""
-        scheduled_time = task.scheduled_time.astimezone(MOSCOW_TZ)
+        scheduled_time = task.scheduled_time.astimezone(UTC_TZ)
         self._scheduler.add_job(
             self._daily_handler.send_daily_message,
             trigger=CronTrigger(
