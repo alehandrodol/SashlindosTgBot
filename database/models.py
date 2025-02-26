@@ -12,6 +12,7 @@ class Chat(Base):
     
     id = Column(Integer, primary_key=True)
     chat_id = Column(BigInteger, unique=True, nullable=False)
+    name = Column(String(128), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     users = relationship("User", back_populates="chat")
     tasks = relationship("SchedulerTask", back_populates="chat")
@@ -54,6 +55,7 @@ class UserStats(Base):
     rating = Column(Integer, default=0, nullable=False)
     master_count = Column(Integer, default=0, nullable=False)
     slave_count = Column(Integer, default=0, nullable=False)
+    launched_count = Column(Integer, default=0, nullable=False)
     last_picture_date = Column(Date, nullable=True)
     
     user = relationship("User", back_populates="stats") 

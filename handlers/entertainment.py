@@ -15,22 +15,19 @@ router = Router()
 async def cmd_picture(message: Message, vk_handler: VKHandler, session):
     """Отправляет случайную фотографию из альбома группы."""
     try:
-        photo_url, error = await vk_handler.get_random_photo(
-            session,
-            message.from_user.id,
-            message.chat.id,
-            check_limit=True
-        )
-        
-        if error:
-            await message.reply(error)
+        if await vk_handler.is_picture_limited(session, message.from_user.id, message.chat.id):
+            await message.delete()
             return
+        photo_url = await vk_handler.get_random_photo()
             
-        # Отправляем фото
-        await message.reply_photo(
-            photo=photo_url,
-            caption="Вот вам пидорская картинка 📸"
-        )
+        if photo_url:
+            # Отправляем фото
+            await message.reply_photo(
+                photo=photo_url,
+                caption="Вот вам пидорская картинка 📸"
+            )
+        else:
+            await message.reply("Фото не нашлось 😢")
         
     except Exception as e:
         await message.reply("Произошла ошибка при получении фотографии.")
