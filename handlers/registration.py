@@ -49,7 +49,7 @@ async def cmd_start(message: Message, session, scheduler: Scheduler):
             return
             
         # Создаем новый чат
-        chat = await handler._create_chat(session, message.chat.id)
+        chat = await handler._create_chat(session, message.chat.id, message.chat.title)
         
         # Настраиваем расписание для нового чата
         await scheduler.setup_chat_job(chat.chat_id)
@@ -68,9 +68,9 @@ class RegistrationHandler:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def _create_chat(session, chat_id: int) -> Chat:
+    async def _create_chat(session, chat_id: int, title: str) -> Chat:
         """Создает новый чат."""
-        chat = Chat(chat_id=chat_id)
+        chat = Chat(chat_id=chat_id, name=title)
         session.add(chat)
         await session.commit()
         return chat

@@ -15,6 +15,7 @@ from core.vk_handler import VKHandler
 from database.models import SchedulerTask, TaskType, User, UserStats
 
 router = Router()
+MOSCOW_TZ = pytz.timezone('Europe/Moscow')
 
 @router.message(Command("daily_status"))
 async def cmd_daily_status(message: Message, session):
@@ -45,7 +46,7 @@ async def cmd_daily_status(message: Message, session):
         if completed_task:
             completed_time = completed_task.scheduled_time.astimezone(utc_tz)
             await message.answer(
-                f"Локатор пидоров уже был запущен сегодня в {completed_time.strftime('%H:%M')} 🎉"
+                f"Локатор пидоров уже был запущен сегодня в {completed_time.astimezone(MOSCOW_TZ).strftime('%H:%M')} 🎉"
             )
         else:
             # Проверяем, запланировано ли сообщение на сегодня
@@ -107,14 +108,15 @@ class DailyHandler:
         result = await session.execute(query)
         return result.scalars().all()
 
-    async def _update_master_slave_stats(self, session, master_id: int, slave_id: int):
+    async def _update_stats(self, session, master_id: int, slave_id: int, initiator_id: int):
         """Обновляет статистику после daily."""
         await session.execute(
             update(UserStats)
             .where(
                 or_(
                     UserStats.id == master_id,
-                    UserStats.id == slave_id
+                    UserStats.id == slave_id,
+                    UserStats.id == initiator_id
                 )
             )
             .values(
@@ -126,6 +128,10 @@ class DailyHandler:
                     (UserStats.id == slave_id, UserStats.slave_count + 1),
                     else_=UserStats.slave_count
                 ),
+                launched_count=case(
+                    (UserStats.id == initiator_id, UserStats.launched_count + 1),
+                    else_=UserStats.launched_count
+                ),
                 rating=case(
                     (UserStats.id == master_id, UserStats.rating + 100),
                     (UserStats.id == slave_id, UserStats.rating + 50),
@@ -134,22 +140,24 @@ class DailyHandler:
             )
         )
 
-    def _format_result_message(self, master: User, slave: User) -> str:
+    def _format_result_message(self, master: User, slave: User, initiator: User) -> str:
         """Форматирует сообщение с результатами."""
         master_username = f"@{master.username}" if master.username else f"ID: {master.user_id}"
         slave_username = f"@{slave.username}" if slave.username else f"ID: {slave.user_id}"
+        initiator_username = f"@{initiator.username}" if initiator.username else f"ID: {initiator.user_id}"
         
         return (
             f"🎯 Локатор обнаружил:\n\n"
             f"👑 {hbold('Пидор дня')}: {master_username}!\n"
-            f"🔗 {hbold('Пассив дня')}: {slave_username}!\n"
+            f"🔗 {hbold('Пассив дня')}: {slave_username}!\n\n"
+            f"🎮 Локатор запустил: {initiator_username}"
         )
 
 @router.callback_query(F.data.startswith("daily_first_"))
 async def handle_daily_first(callback: CallbackQuery, session, vk_handler: VKHandler):
     try:
         chat_id = callback.message.chat.id
-        user_id = callback.from_user.id
+        initiator_user_id = callback.from_user.id
         task_id = int(callback.data.split('_')[-1])
         
         # Проверяем, что задача была запланирована на сегодня
@@ -176,7 +184,7 @@ async def handle_daily_first(callback: CallbackQuery, session, vk_handler: VKHan
         
         handler = DailyHandler()
         # Проверяем пользователя и обновляем рейтинг
-        user = await handler._get_user_by_id(session, user_id, chat_id)
+        user = await handler._get_user_by_id(session, initiator_user_id, chat_id)
         if not user:
             await callback.message.reply("Вы не учавствуете в поиске пидоров! Используйте /addme чтобы добавиться в поиск.")
             return
@@ -195,18 +203,14 @@ async def handle_daily_first(callback: CallbackQuery, session, vk_handler: VKHan
         master, slave = random_users
         
         # Обновляем статистику
-        await handler._update_master_slave_stats(session, master.id, slave.id)
+        await handler._update_stats(session, master.id, slave.id, user.id)
         await session.commit()
         
         # Получаем случайное фото
-        photo_url = (await vk_handler.get_random_photo(
-            session,
-            user_id,
-            chat_id
-        ))[0]
-        
-        # Формируем результат
-        result_message = handler._format_result_message(master, slave)
+        photo_url = await vk_handler.get_random_photo()
+
+        # Формируем результат с информацией об инициаторе
+        result_message = handler._format_result_message(master, slave, user)
         
         # Отправляем результат с фото, если оно есть
         if photo_url:

@@ -27,7 +27,7 @@ class VKHandler:
             
         return photo_url
 
-    async def check_user_limit(self, session, user_id: int, chat_id: int) -> tuple[bool, str]:
+    async def is_picture_limited(self, session, user_id: int, chat_id: int) -> bool:
         """Проверяет, может ли пользователь использовать команду сегодня."""
         query = (
             select(UserStats)
@@ -43,32 +43,26 @@ class VKHandler:
         stats = result.scalar_one_or_none()
         
         if not stats:
-            return False, "Вы не зарегистрированы в системе!"
+            return True
         
         today = datetime.now(UTC_TZ).date()
         
         if stats.last_picture_date == today:
-            return False, "Вы уже использовали команду сегодня! Попробуйте завтра 😉"
+            return True
             
         stats.last_picture_date = today
         await session.commit()
         
-        return True, ""
+        return False
 
-    async def get_random_photo(self, session, user_id: int, chat_id: int, check_limit: bool = False) -> tuple[str | None, str]:
+    async def get_random_photo(self) -> str | None:
         """Получает случайную фотографию из альбома группы."""
-        # Проверяем лимит пользователя только если check_limit=True
-        if check_limit:
-            can_use, error_message = await self.check_user_limit(session, user_id, chat_id)
-            if not can_use:
-                return None, error_message
-
         try:
             # Получаем размер альбома
             size = self._vk.photos.get_albums(owner_id=self.GROUP_ID, album_ids=self.ALBUM_ID)['items'][0]['size']
 
             if size == 0:
-                return None, "В альбоме нет фотографий 😢"
+                return None
             
             # Получаем случайную фотографию
             photo = self._vk.photos.get(
@@ -82,7 +76,7 @@ class VKHandler:
             photo_url = self._get_photo_url(photo)
             logging.info(f"Получен URL фото: {photo_url}")
             
-            return photo_url, None
+            return photo_url
             
         except Exception as e:
             error_msg = f"Ошибка при получении фотографии: {e}"

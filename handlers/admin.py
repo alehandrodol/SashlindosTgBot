@@ -1,5 +1,6 @@
 # Стандартные библиотеки
 import logging
+import pytz
 
 # Сторонние библиотеки
 from aiogram import Router, F
@@ -16,6 +17,7 @@ from core.scheduler import Scheduler
 router = Router()
 
 ALEHANDRO_ID = 454397941
+MOSCOW_TZ = pytz.timezone('Europe/Moscow')
 
 class AdminMessageStates(StatesGroup):
     waiting_for_message = State()
@@ -121,7 +123,7 @@ async def cmd_tasks(message: Message, scheduler: Scheduler):
         
         for job in jobs:
             job_time = job['next_run_time']
-            formatted_time = job_time.strftime("%d.%m.%Y %H:%M")
+            formatted_time = job_time.astimezone(MOSCOW_TZ).strftime("%d.%m.%Y %H:%M")
             
             lines.append(
                 f"🔹 ID: {job['id']}\n"
