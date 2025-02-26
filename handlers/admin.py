@@ -5,12 +5,13 @@ import logging
 from aiogram import Router, F
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 from sqlalchemy import select
 
 # Локальные импорты
 from database.models import Chat
-from aiogram.fsm.state import State, StatesGroup
+from core.scheduler import Scheduler
 
 router = Router()
 
@@ -95,4 +96,43 @@ async def process_message_to_send(message: Message, session, state: FSMContext):
         await message.reply("Произошла ошибка при отправке сообщения.")
         logging.error(f"Error in process_message_to_send: {e}")
         await state.clear()
+
+@router.message(Command("tasks"))
+async def cmd_tasks(message: Message, scheduler: Scheduler):
+    """Показывает все запланированные задачи."""
+    
+    if message.chat.type != 'private':
+        return
+    
+    # Проверка на админа
+    if message.from_user.id != ALEHANDRO_ID:
+        await message.reply("У вас нет прав для использования этой команды!")
+        return
+        
+    try:
+        jobs = scheduler.get_scheduled_jobs()
+        
+        if not jobs:
+            await message.reply("Нет запланированных задач.")
+            return
+            
+        # Форматируем сообщение
+        lines = ["📅 <b>Запланированные задачи:</b>\n"]
+        
+        for job in jobs:
+            job_time = job['next_run_time']
+            formatted_time = job_time.strftime("%d.%m.%Y %H:%M")
+            
+            lines.append(
+                f"🔹 ID: {job['id']}\n"
+                f"⏰ Следующий запуск: {formatted_time}\n"
+                f"📍 Чат ID: {job['args'][0] if job['args'] else 'N/A'}\n"
+                f"ℹ️ Тип: {job['trigger']}\n"
+            )
+            
+        await message.reply("\n".join(lines), parse_mode="HTML")
+        
+    except Exception as e:
+        await message.reply("Произошла ошибка при получении списка задач.")
+        logging.error(f"Error in cmd_tasks: {e}")
 
