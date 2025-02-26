@@ -11,7 +11,7 @@ from vk_api.vk_api import VkApiMethod
 # Локальные импорты
 from database.models import User, UserStats
 
-MOSCOW_TZ = pytz.timezone('Europe/Moscow')
+UTC_TZ = pytz.UTC
 
 class VKHandler:
     GROUP_ID = '-209871225'
@@ -45,7 +45,7 @@ class VKHandler:
         if not stats:
             return False, "Вы не зарегистрированы в системе!"
         
-        today = datetime.now(MOSCOW_TZ).date()
+        today = datetime.now(UTC_TZ).date()
         
         if stats.last_picture_date == today:
             return False, "Вы уже использовали команду сегодня! Попробуйте завтра 😉"
