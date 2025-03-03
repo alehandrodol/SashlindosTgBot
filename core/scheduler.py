@@ -41,8 +41,8 @@ class Scheduler:
             
             # Вычисляем следующее время
             now = datetime.now(UTC_TZ)
-            next_time = now.replace(
-                day=now.day + 1,
+            next_time = now + datetime.timedelta(days=1)
+            next_time = next_time.replace(
                 hour=hour,
                 minute=minute,
                 second=0,
