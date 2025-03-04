@@ -1,7 +1,7 @@
 # Стандартные библиотеки
 import logging
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Сторонние библиотеки
 import pytz
@@ -41,7 +41,7 @@ class Scheduler:
             
             # Вычисляем следующее время
             now = datetime.now(UTC_TZ)
-            next_time = now + datetime.timedelta(days=1)
+            next_time = now + timedelta(days=1)
             next_time = next_time.replace(
                 hour=hour,
                 minute=minute,
